@@ -9,10 +9,14 @@
 %--------------------------------
 %some constants to control engine
 %--------------------------------
-QAM_constellation = 4; %Sets QMA constellation
-plot_constellation_size = QAM_constellation*10; %sets size of symbols when plotting constellation.
-I_mapper=ones(1,plot_constellation_size);
-Q_mapper=ones(1,plot_constellation_size);
+QAM_constellation = 16; %Sets QMA constellation
+plot_constellation_size = QAM_constellation*10; %sets number of symbols when plotting constellation
+
+%------------ Control lsb time tick ------------
+Oversamples = 8; %N number of points between symbols (to approximate real time)
+I_data=ones(1,plot_constellation_size*Oversamples);
+Q_data=ones(1,plot_constellation_size*Oversamples);
+
 
 %--------------------------------
 %some functions that needs to be called before engine starts
@@ -26,16 +30,34 @@ QAM_mapper(zeros(1,bits_per_symbol(QAM_constellation)),QAM_constellation);
 %-------------------------------
 %Use box to stop look execution.
 %stoploop();
+%Loop runs with minimal time tick. One iteration is one time point (N*symbol)long. Controlled by Oversamples. 
 FS = stoploop({'To stop engine press OK button'}) ;
+time_tick = 0;
+
 while(~FS.Stop())
-  %generate a new input bits. Bits are either 1 or 0.
-  bits=round(rand(1,bits_per_symbol(QAM_constellation)));
+  if mod(time_tick,(Oversamples+1)) == 0
+    %generate a new input bits. Bits are either 1 or 0.
+    bits=round(rand(1,bits_per_symbol(QAM_constellation)));
+ 
+    %Feed bit to QAM mapper and generate constellation.
+    symb=QAM_mapper(bits);
+    time_tick = 0;
+  else
+     %push in zeros to oversample data 
+     symb = [0 0];
+  end
   
-  %Feed bit to QAM mapper and generate constellation.
-  symb=QAM_mapper(bits);
-  Q_mapper = [ Q_mapper(2:end) symb(1,1)];
-  I_mapper = [ I_mapper(2:end) symb(1,2)];
+  %Add new time tick of data to buffer. Flush oldest time data.
+  Q_data = [ Q_data(2:end) symb(1,1)];
+  I_data = [ I_data(2:end) symb(1,2)];
   
+  
+  
+  
+  
+  
+  %At end of everything step time one point forward. Should be placed last in while loop
+  time_tick=time_tick+1;
 end
 
 
