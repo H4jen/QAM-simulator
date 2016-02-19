@@ -7,16 +7,24 @@
 % imag.
 
 %--------------------------------
-%some constants to control engine
+% some constants to control engine
 %--------------------------------
 QAM_constellation = 16; %Sets QMA constellation
-plot_constellation_size = QAM_constellation*10; %sets number of symbols when plotting constellation
+plot_mult_factor = 10;
+plot_constellation_size = QAM_constellation*plot_mult_factor; %sets number of symbols when plotting constellation
 
 %------------ Control lsb time tick ------------
 Oversamples = 8; %N number of points between symbols (to approximate real time)
 I_data=ones(1,plot_constellation_size*Oversamples);
 Q_data=ones(1,plot_constellation_size*Oversamples);
 
+%--------------------------------
+%Define symbolfilter
+%--------------------------------
+roll_off = 0.5;
+filter_type = 'RC';
+N_symbols = 6; %defines the number of symbols for each filter.
+symb_filt = symbol_filter(filter_type,roll_off,8,Oversamples)
 
 %--------------------------------
 %some functions that needs to be called before engine starts
@@ -34,6 +42,9 @@ QAM_mapper(zeros(1,bits_per_symbol(QAM_constellation)),QAM_constellation);
 FS = stoploop({'To stop engine press OK button'}) ;
 time_tick = 0;
 
+%inform engine user of various information.
+IQ_buffersize = QAM_constellation * plot_mult_factor * Oversamples
+
 while(~FS.Stop())
   if mod(time_tick,(Oversamples+1)) == 0
     %generate a new input bits. Bits are either 1 or 0.
@@ -48,11 +59,12 @@ while(~FS.Stop())
   end
   
   %Add new time tick of data to buffer. Flush oldest time data.
-  Q_data = [ Q_data(2:end) symb(1,1)];
-  I_data = [ I_data(2:end) symb(1,2)];
+  %First index always contains newest data.
+  Q_data = [ symb(1,1) Q_data(1:(end-1))];
+  I_data = [ symb(1,2) I_data(1:(end-1))];
   
-  
-  
+  %Upsample with symbol filter. (RC or RRC)
+    
   
   
   
