@@ -1,3 +1,4 @@
+clear all;
 % QAM engine
 % Starting point of engine
 % 2016-02-03 /H4jen
@@ -17,14 +18,16 @@ plot_constellation_size = QAM_constellation*plot_mult_factor; %sets number of sy
 Oversamples = 8; %N number of points between symbols (to approximate real time)
 I_data=ones(1,plot_constellation_size*Oversamples);
 Q_data=ones(1,plot_constellation_size*Oversamples);
+I_upsamp_data=zeros(1,plot_constellation_size*Oversamples);
+Q_upsamp_data=zeros(1,plot_constellation_size*Oversamples);
 
 %--------------------------------
 %Define symbolfilter
 %--------------------------------
 roll_off = 0.5;
 filter_type = 'RC';
-N_symbols = 6; %defines the number of symbols for each filter.
-symb_filt = symbol_filter(filter_type,roll_off,8,Oversamples)
+N_symbols = 2; %defines the number of symbols for each filter.
+symb_filt = symbol_filter(filter_type,roll_off,N_symbols,Oversamples*2)
 
 %--------------------------------
 %some functions that needs to be called before engine starts
@@ -63,11 +66,17 @@ while(~FS.Stop())
   Q_data = [ symb(1,1) Q_data(1:(end-1))];
   I_data = [ symb(1,2) I_data(1:(end-1))];
   
-  %Upsample with symbol filter. (RC or RRC)
+  %Run data throughsymbol filter. Based on time tick. Called function keeps
+  %track of incoming and outgoing samples and does iterative convolution,
+  %like a FPGA would do. Delay of function will be N_symbols of filter +
+  %oversamples
+  [Q_temp I_temp] = convolve_symbol_filter(symb_filt,symb(1,1),symb(1,2));
+  
+  
+  Q_upsamp_data = [ Q_temp Q_upsamp_data(1:(end-1))];
+  I_upsamp_data = [ I_temp I_upsamp_data(1:(end-1))];
+  
     
-  
-  
-  
   %At end of everything step time one point forward. Should be placed last in while loop
   time_tick=time_tick+1;
 end
