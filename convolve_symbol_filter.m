@@ -12,8 +12,8 @@ if isempty(inputdata_buffer_Q)
 end
 
 %Symmetrical filter does not care bout orientation. If not sym take CARE!!
-inputdata_buffer_I = [inputdata_buffer_I(2:end) I_in];
-inputdata_buffer_Q = [inputdata_buffer_Q(2:end) Q_in];
+inputdata_buffer_I = [ I_in inputdata_buffer_I(1:end-1)];
+inputdata_buffer_Q = [Q_in inputdata_buffer_Q(1:end-1)];
 Q_out = sum(inputdata_buffer_Q.*filter);
 I_out = sum(inputdata_buffer_I.*filter);
 

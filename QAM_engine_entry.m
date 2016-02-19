@@ -10,7 +10,7 @@ clear all;
 %--------------------------------
 % some constants to control engine
 %--------------------------------
-QAM_constellation = 16; %Sets QMA constellation
+QAM_constellation = 4; %Sets QMA constellation
 plot_mult_factor = 10;
 plot_constellation_size = QAM_constellation*plot_mult_factor; %sets number of symbols when plotting constellation
 
@@ -26,8 +26,10 @@ Q_upsamp_data=zeros(1,plot_constellation_size*Oversamples);
 %--------------------------------
 roll_off = 0.5;
 filter_type = 'RC';
-N_symbols = 2; %defines the number of symbols for each filter.
-symb_filt = symbol_filter(filter_type,roll_off,N_symbols,Oversamples*2)
+N_symbols = 4; %defines the number of symbols for each filter.
+symb_filt = symbol_filter(filter_type,roll_off,N_symbols,Oversamples)
+
+size(symb_filt)
 
 %--------------------------------
 %some functions that needs to be called before engine starts
@@ -80,5 +82,18 @@ while(~FS.Stop())
   %At end of everything step time one point forward. Should be placed last in while loop
   time_tick=time_tick+1;
 end
+
+figure(1);
+clf;
+stem(I_upsamp_data(1:100));
+hold on;
+stem(0.35*I_data(19:119))
+figure(4);
+figure(2);
+clf;
+stem(Q_upsamp_data(1:100))
+hold on;
+stem(0.35*Q_data(19:119))
+
 
 
